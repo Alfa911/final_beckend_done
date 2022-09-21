@@ -3,14 +3,26 @@ import IRequest from "../types/request";
 import Film from "../models/film";
 import User, {IUser} from "../models/user";
 import {createError} from "../helpers";
+
 type controllerFilm = {
     list: (req: IRequest, res: Response) => Promise<void | never>
     add: (req: IRequest, res: Response) => Promise<void | never>
-    addFavorite: (req: IRequest, res: Response) => Promise<void | never>
-    removeFavorite: (req: IRequest, res: Response) => Promise<void | never>
-    addWatch: (req: IRequest, res: Response) => Promise<void | never>
-    removeWatch: (req: IRequest, res: Response) => Promise<void | never>
+    favorite: (req: IRequest, res: Response) => Promise<void | never>
+    watch: (req: IRequest, res: Response) => Promise<void | never>
+    deleteById: (req: IRequest, res: Response) => Promise<void | never>
+    deleteMany: (req: IRequest, res: Response) => Promise<void | never>
 }
+
+function prepareUpdate(idsList: [], listUser: [string]): any {
+
+    let oldList: [] = [];
+    // @ts-ignore
+    listUser.forEach((element) => oldList.push(element.toString()));
+
+    return idsList.filter(x => !oldList.includes(x))
+        .concat(oldList.filter(x => !idsList.includes(x)));
+}
+
 let FilmController: controllerFilm = {
     list: async (req: IRequest, res: Response): Promise<void | never> => {
         const user: IUser = req.user;
@@ -21,7 +33,7 @@ let FilmController: controllerFilm = {
             .sort('-createdOn')
             .populate('country')
             .populate('genre')
-        .select('-owner');
+            .select('-owner');
         let result = {
             list: list,
             page: page,
@@ -43,48 +55,47 @@ let FilmController: controllerFilm = {
         const newFilm = await Film.create({name, year, country, genre, links, owner: user.id});
         res.status(200).json(newFilm)
     },
-    addFavorite: async (req: IRequest, res: Response): Promise<void | never> => {
-        const user = req.user;
-        const {id} = req.body;
-        const newUser: IUser | null = await User.findByIdAndUpdate(user.id, {$push: {favorite: [id]}}, {new: true});
+    favorite: async (req: IRequest, res: Response): Promise<void | never> => {
+        const user: IUser = req.user;
+        let {id} = req.body;
+        let diff = prepareUpdate(id, user.favorite);
+        let newUser = await User.findByIdAndUpdate(user.id,
+            {favorite: diff}, {new: true});
         if (!newUser) {
             throw createError(400);
         }
         res.json({"list": newUser.favorite})
 
     },
-    removeFavorite: async (req: IRequest, res: Response): Promise<void | never> => {
-
+    watch: async (req: IRequest, res: Response): Promise<void | never> => {
         const user = req.user;
         const {id} = req.body;
-        const newUser: IUser | null = await User.findByIdAndUpdate(user.id, {$pull: {favorite: [id]}}, {new: true});
-        if (!newUser) {
-            throw createError(400);
-        }
-        res.json({"list": newUser.favorite})
-
-    },
-    addWatch: async (req: IRequest, res: Response): Promise<void | never> => {
-        const user = req.user;
-        const {id} = req.body;
-        const newUser: IUser | null = await User.findByIdAndUpdate(user.id, {$push: {watch: [id]}}, {new: true});
+        let diff = prepareUpdate(id, user.watch);
+        const newUser: IUser | null = await User.findByIdAndUpdate(user.id, {watch: diff}, {new: true});
         if (!newUser) {
             throw createError(400);
         }
         res.json({"list": newUser.watch})
-
     },
-    removeWatch: async (req: IRequest, res: Response): Promise<void | never> => {
-        const user = req.user;
-        const {id} = req.body;
-        const newUser: IUser | null = await User.findByIdAndUpdate(user.id, {$pull: {watch: [id]}}, {new: true});
-        if (!newUser) {
-            throw createError(400);
+    deleteById: async (req: IRequest, res: Response): Promise<void | never> => {
+        const {id} = req.params;
+        let result = await Film.findByIdAndRemove({"_id": id});
+        if (!result) {
+            throw createError(404);
         }
-        res.json({"list": newUser.watch})
+        await User.updateMany({}, {$pull: {favorite: id, watch: id}});
+        res.json(result)
+    },
+    deleteMany: async (req: IRequest, res: Response): Promise<void | never> => {
+        const {id} = req.params;
+        let result = await Film.deleteMany({"_id": id});
+        if (!result) {
+            throw createError(404);
+        }
+        await User.updateMany({}, {$pull: {favorite: id, watch: id}});
+        res.json(result)
+    },
 
-
-    }
 }
 
 export default FilmController;

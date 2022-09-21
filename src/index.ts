@@ -1,9 +1,8 @@
 import express, {Request, Response, NextFunction} from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import authRoute from './routes/auth';
-import filmsRoute from './routes/films';
 import 'dotenv/config';
+import {authRoute, countryRoute, facebookRoute, filmsRoute, genreRoute, googleRoute} from "./routes";
 
 const {HOST_DB = "mongodb+srv://127.0.0.1/db", API_PORT = 3000} = process.env;
 const app = express();
@@ -18,6 +17,10 @@ app.use(cors());
 app.use(express.json());
 app.use('/auth', authRoute);
 app.use('/films', filmsRoute);
+app.use('/countries', countryRoute);
+app.use('/genre', genreRoute);
+app.use('/facebook', facebookRoute);
+app.use('/google', googleRoute);
 app.use((error: ErrorStatus, req: Request, res: Response, next: NextFunction) => {
     let {message = "Unknown error", status = 500} = error;
     if (error.name === 'CastError') {

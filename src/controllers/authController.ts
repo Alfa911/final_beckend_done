@@ -36,7 +36,7 @@ let authController: controllerAuth = {
             throw createError(401);
         }
         let token = await createJwtSession(user);
-        res.json({token})
+        res.json({token, email: user.email, isAdmin: user.isAdmin})
     },
     logout: async (req: IRequest, res: Response): Promise<void | never> => {
         const {id} = req.user;

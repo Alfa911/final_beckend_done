@@ -4,8 +4,9 @@ interface msArray {
 
 let messages: msArray = {
     400: "Bad request",
-    404: "Not found",
-    401: "Your request was made with invalid credentials"
+    401: "Your request was made with invalid credentials",
+    403: "Forbidden",
+    404: "Not found"
 };
 
 interface ErrorStatus extends Error {

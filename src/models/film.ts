@@ -69,5 +69,8 @@ export const addFilm = Joi.object({
     genre: Joi.array().required(),
     country: Joi.string().required(),
 });
+export const changeFavoriteWatch = Joi.object({
+    id: Joi.array().required()
+});
 
 export default Film;

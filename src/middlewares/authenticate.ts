@@ -2,11 +2,9 @@ import Passport from "passport";
 import User from "../models/user";
 import {NextFunction, Request, Response} from "express";
 import passportJWT from 'passport-jwt';
-import {Strategy as GoogleStrategy} from 'passport-google-oauth2';
-
 import 'dotenv/config';
 
-const {SECRET_JWT = '', GOOGLE_CLIENT_ID = '', GOOGLE_CLIENT_SECRET = ''} = process.env;
+const {SECRET_JWT = ''} = process.env;
 
 const ExtractJWT = passportJWT.ExtractJwt;
 const Strategy = passportJWT.Strategy;
@@ -35,14 +33,5 @@ const authenticateUser = (req: any, res: Response, next: NextFunction) => {
         next();
     })(req, res, next);
 
-};
-export const authenticateUserNotRequire = (req: any, res: Response, next: NextFunction) => {
-    Passport.authenticate('jwt', {session: false}, (err, user) => {
-        const token = params.jwtFromRequest(req);
-        if (user && user.token === token) {
-            req.user = user;
-        }
-        next();
-    })(req, res, next);
 };
 export default authenticateUser;
