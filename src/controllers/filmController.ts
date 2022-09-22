@@ -34,10 +34,13 @@ let FilmController: controllerFilm = {
             .populate('country')
             .populate('genre')
             .select('-owner');
+        const total = await Film.find().count();
+
         let result = {
             list: list,
             page: page,
             perPage: perPage,
+            totalCount: total,
             favorite: [],
             watch: [],
         };
